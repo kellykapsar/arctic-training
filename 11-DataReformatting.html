@@ -190,7 +190,8 @@ $(document).ready(function () {
 </div>
 
 
-<p>Data for this analysis were downloaded from <a href="https://knb.ecoinformatics.org/view/df35b.304.2">here</a> Tutorial for this analysis from Arctic Data Center <a href="http://training.arcticdata.io/materials/arctic-data-center-training/data-cleaning-and-manipulation.html">here</a></p>
+<p>Data for this analysis: <a href="https://knb.ecoinformatics.org/view/df35b.304.2">Mike Byerly. Alaska commercial salmon catches by management region (1886- 1997). Gulf of Alaska Data Portal. df35b.304.2.</a>.</p>
+<p>Tutorial for this analysis from Arctic Data Center <a href="http://training.arcticdata.io/materials/arctic-data-center-training/data-cleaning-and-manipulation.html">here</a>.</p>
 <pre class="r"><code># Load libraries
 library(dplyr)
 library(tidyr)
@@ -206,6 +207,97 @@ library(tidyr)
 </ul></li>
 <li>General QA</li>
 </ul>
+<pre class="r"><code># Can use DataONE package to check and see if there's a new version of the data available! 
+
+catch_original &lt;- read.csv(url(&quot;https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1&quot;, method=&quot;libcurl&quot;), stringsAsFactors=FALSE)
+
+head(catch_original)</code></pre>
+<pre><code>##   Region Year Chinook Sockeye Coho Pink Chum All notesRegCode
+## 1    SSE 1886       0       5    0    0    0   5             
+## 2    SSE 1887       0     155    0    0    0 155             
+## 3    SSE 1888       0     224   16    0    0 240             
+## 4    SSE 1889       0     182   11   92    0 285             
+## 5    SSE 1890       0     251   42    0    0 292             
+## 6    SSE 1891       0     274   24    0    0 298</code></pre>
+<p>Remove the <code>all</code> and <code>notesRegCod</code> columns using <code>select</code>.</p>
+<p>Cmd + shift + m is the shortcut for the pipe operator.</p>
+<pre class="r"><code># Key == Species
+# Value == Catch 
+
+# Unless you specify otherwise, gather will translate all values in data frame
+# into a key value pair
+
+catch_long &lt;- catch_original %&gt;%  
+  select(-All, -notesRegCode) %&gt;% # Select columns that we want
+  # Gather over everything except region and year
+  # Moves from wide -&gt; long 
+  gather(key=&quot;species&quot;, value=&quot;catch&quot;, -Region, -Year)
+
+head(catch_long)</code></pre>
+<pre><code>##   Region Year species catch
+## 1    SSE 1886 Chinook     0
+## 2    SSE 1887 Chinook     0
+## 3    SSE 1888 Chinook     0
+## 4    SSE 1889 Chinook     0
+## 5    SSE 1890 Chinook     0
+## 6    SSE 1891 Chinook     0</code></pre>
+<p>Convert data table back to wide.</p>
+<pre class="r"><code>catch_wide &lt;- catch_long %&gt;% 
+  spread(key=species, value=catch)
+
+head(catch_wide)</code></pre>
+<pre><code>##   Region Year Chinook Chum Coho Pink Sockeye
+## 1    ALU 1911       0    0    0    0       9
+## 2    ALU 1912       0    0    0    0       0
+## 3    ALU 1913       0    0    0    0       0
+## 4    ALU 1914       0    0    0    0       0
+## 5    ALU 1915       0    0    0    0       0
+## 6    ALU 1916       0    0    1  180      76</code></pre>
+<div id="clean-up-our-data" class="section level2">
+<h2>Clean up our data</h2>
+<ul>
+<li>Rename catch to catch_thousands</li>
+<li>Change catch column to be numeric</li>
+<li>Create new catch column in units num. of fish</li>
+</ul>
+<pre class="r"><code>catch_clean &lt;- catch_long %&gt;% 
+  rename(catch_thousands = catch) %&gt;% # new name = old name 
+  mutate(catch_thousands = ifelse(catch_thousands == &quot;I&quot;, 1, catch_thousands)) %&gt;% 
+  mutate(catch_thousands = as.numeric(catch_thousands)) %&gt;% 
+  mutate(catch = catch_thousands*1000) %&gt;% # creates new col or changes values in existing col
+  select(-catch_thousands)
+
+head(catch_clean)</code></pre>
+<pre><code>##   Region Year species catch
+## 1    SSE 1886 Chinook     0
+## 2    SSE 1887 Chinook     0
+## 3    SSE 1888 Chinook     0
+## 4    SSE 1889 Chinook     0
+## 5    SSE 1890 Chinook     0
+## 6    SSE 1891 Chinook     0</code></pre>
+</div>
+<div id="split---apply---combine" class="section level2">
+<h2>Split - Apply - Combine</h2>
+<ul>
+<li>Calculate mean catch by species</li>
+</ul>
+<pre class="r"><code>species_mean &lt;- catch_clean %&gt;% group_by(species, Region) %&gt;%  
+  summarize(catch_mean = mean(catch), num_obs = n())
+
+species_mean_wide &lt;- spread(species_mean, key=species, value=catch_mean)
+
+year_mean_all &lt;- catch_clean %&gt;% group_by(Year) %&gt;%  
+  summarize(catch_mean = mean(catch), num_obs = n()) %&gt;% 
+  arrange(-catch_mean) %&gt;%  # Orders in descending order 
+  filter(Year &gt;= 1990)
+
+year_mean_byspp &lt;- catch_clean %&gt;% group_by(Year, species) %&gt;%  
+  summarize(catch_mean = mean(catch), num_obs = n()) %&gt;% 
+  arrange(-catch_mean) %&gt;%  # Orders in descending order 
+  filter(Year &gt;= 1990)
+
+year_mean_wide &lt;- spread(year_mean_byspp, key=species, value=catch_mean)</code></pre>
+</div>
 </div>
 <div id="join-the-region-definitions" class="section level1">
 <h1>Join the Region Definitions</h1>
