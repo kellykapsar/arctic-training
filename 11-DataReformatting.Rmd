@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Data for this analysis were downloaded from [here](https://knb.ecoinformatics.org/view/df35b.304.2). 
+Data for this analysis: [Mike Byerly. Alaska commercial salmon catches by management region (1886- 1997). Gulf of Alaska Data Portal. df35b.304.2.](https://knb.ecoinformatics.org/view/df35b.304.2). 
 
 Tutorial for this analysis from Arctic Data Center [here](http://training.arcticdata.io/materials/arctic-data-center-training/data-cleaning-and-manipulation.html). 
 
@@ -27,6 +27,51 @@ library(tidyr)
 * Create species column
     - Move from wide to long 
 * General QA 
+
+```{r}
+
+# Can use DataONE package to check and see if there's a new version of the data available! 
+
+catch_original <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", method="libcurl"), stringsAsFactors=FALSE)
+
+head(catch_original)
+
+```
+
+Remove the `all` and `notesRegCod` columns using `select`. 
+
+Cmd + shift + m is the shortcut for the pipe operator. 
+
+```{r}
+
+# Key == Species
+# Value == Catch 
+
+# Unless you specify otherwise, gather will translate all values in data frame
+# into a key value pair
+
+catch_long <- catch_original %>%  
+  select(-All, -notesRegCode) %>% # Select columns that we want
+  # Gather over everything except region and year
+  # Moves from wide -> long 
+  gather(key="species", value="catch", -Region, -Year)
+
+head(catch_long)
+
+```
+
+Convert data table back to wide. 
+
+```{r}
+
+catch_wide <- catch_long %>% 
+  spread(key=species, value=catch)
+
+head(catch_wide)
+
+```
+
+
 
 # Join the Region Definitions 
 
