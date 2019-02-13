@@ -1,0 +1,34 @@
+---
+title: "11. Data Reformatting"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Data for this analysis were downloaded from [here](https://knb.ecoinformatics.org/view/df35b.304.2). 
+
+Tutorial for this analysis from Arctic Data Center [here](http://training.arcticdata.io/materials/arctic-data-center-training/data-cleaning-and-manipulation.html). 
+
+```{r, warning=FALSE, message=FALSE}
+# Load libraries
+library(dplyr)
+library(tidyr)
+
+# to call stats filter - stats::filter()
+
+```
+
+
+# Reformat Catch Data
+
+* Remove "all" column 
+* Create species column
+    - Move from wide to long 
+* General QA 
+
+# Join the Region Definitions 
+
+# Misc. Functions 
+
