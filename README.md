@@ -8,3 +8,8 @@ Hands on materials for the NSF Arctic Data Training Workshop.
 
 Made some changes from RStudio. 
 
+There once was a nice little tree. 
+Then he had a baby! 
+And then an alien visited the orchard. 
+And the nice little tree grew yummy apples! 
+
