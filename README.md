@@ -3,10 +3,10 @@
    mmm
   mmmmm
  mmmmmmm
-mmmmmmmmm
- mmmmmmm
-  \   /
-   \ /
-    |
-    | \/\*///\\*/
+mmmmmmmmm        mmm
+ mmmmmmm        mmmmm
+  \   /        mmmmmmm
+   \ /          mmmmm
+    |            \ /
+    | \/\*///\\*/ |
 
