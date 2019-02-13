@@ -1,9 +1,12 @@
 # Arctic Training Hands-On Materials
+   
+   mmm
+  mmmmm
+ mmmmmmm
+mmmmmmmmm
+ mmmmmmm
+  \   /
+   \ /
+    |
+    |
 
-  m
- mmm
-mmmmm
-\   /
- \ /
-  |
-  |
