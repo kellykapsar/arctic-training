@@ -1,12 +1,14 @@
 # Arctic Training Hands-On Materials
-
-Hands on materials for the NSF Arctic Data Training Workshop. 
-
-* Data 
-* Lessons 
-* Notes 
-
-Made some changes from RStudio. 
+   
+   mmm
+  m*mmm*
+ mmmmm*m
+mmm*mmmmm        mmm
+ *mmmmmm        mmmmm
+  \   /        mmmmmmm
+   \ /          mmmmm      \o/
+    |            \ /        |
+    | \/\*///\\*/ |//\\*// / \
 
 There once was a nice little tree. 
 Then he had a baby! 
