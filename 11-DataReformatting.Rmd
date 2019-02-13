@@ -125,5 +125,59 @@ year_mean_wide <- spread(year_mean_byspp, key=species, value=catch_mean)
 
 # Join the Region Definitions 
 
+```{r}
+
+# Read in regions file 
+region_defs <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1",
+                            method = "libcurl"),
+                        stringsAsFactors = FALSE) %>% 
+    select(code, mgmtArea)
+
+# head(region_defs)
+
+```
+```{r}
+
+# Left join 
+catch_joined <- left_join(catch_clean, region_defs, by=c("Region" = "code"))
+
+# Inner join has same number of rows as left join 
+# This indicates that no there are no missing 
+# catch_joined <- inner_join(catch_clean, region_defs, by=c("Region" = "code"))
+
+```
+
+
 # Misc. Functions 
+
+Split and unite. 
+
+```{r}
+
+dates_df <- data.frame(date = c("5/24/1930",
+                                "5/25/1930",
+                                "5/26/1930",
+                                "5/27/1930",
+                                "5/28/1930"),
+                       stringsAsFactors = FALSE)
+
+dates_split <- dates_df %>% 
+  separate(date, c("month", "day", "year"), "/")
+
+dates_unite <- dates_split %>% unite(col = date_iso, year,  month, day, sep="-")
+
+# Make two digit month 
+dates_2digmonth <- dates_split %>% mutate(month = str_pad(month, 2, side="left", pad="0"))
+
+# Lubridate package is best for dates! 
+
+```
+
+Save data output. 
+
+```{r}
+
+write.csv(catch_clean, "catch_clean.csv", row.names = F)
+
+```
 
