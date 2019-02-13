@@ -6,7 +6,7 @@
 mmmmmmmmm        mmm
  mmmmmmm        mmmmm
   \   /        mmmmmmm
-   \ /          mmmmm
-    |            \ /
-    | \/\*///\\*/ |
+   \ /          mmmmm      \o/
+    |            \ /        |
+    | \/\*///\\*/ |//\\*// / \
 
