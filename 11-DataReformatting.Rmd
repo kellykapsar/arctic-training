@@ -1,0 +1,183 @@
+---
+title: "11. Data Reformatting"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Data for this analysis: [Mike Byerly. Alaska commercial salmon catches by management region (1886- 1997). Gulf of Alaska Data Portal. df35b.304.2.](https://knb.ecoinformatics.org/view/df35b.304.2). 
+
+Tutorial for this analysis from Arctic Data Center [here](http://training.arcticdata.io/materials/arctic-data-center-training/data-cleaning-and-manipulation.html). 
+
+```{r, warning=FALSE, message=FALSE}
+# Load libraries
+library(dplyr)
+library(tidyr)
+
+# to call stats filter - stats::filter()
+
+```
+
+
+# Reformat Catch Data
+
+* Remove "all" column 
+* Create species column
+    - Move from wide to long 
+* General QA 
+
+```{r}
+
+# Can use DataONE package to check and see if there's a new version of the data available! 
+
+catch_original <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", method="libcurl"), stringsAsFactors=FALSE)
+
+head(catch_original)
+
+```
+
+Remove the `all` and `notesRegCod` columns using `select`. 
+
+Cmd + shift + m is the shortcut for the pipe operator. 
+
+```{r}
+
+# Key == Species
+# Value == Catch 
+
+# Unless you specify otherwise, gather will translate all values in data frame
+# into a key value pair
+
+catch_long <- catch_original %>%  
+  select(-All, -notesRegCode) %>% # Select columns that we want
+  # Gather over everything except region and year
+  # Moves from wide -> long 
+  gather(key="species", value="catch", -Region, -Year)
+
+head(catch_long)
+
+```
+
+Convert data table back to wide. 
+
+```{r}
+
+catch_wide <- catch_long %>% 
+  spread(key=species, value=catch)
+
+head(catch_wide)
+
+```
+## Clean up our data 
+
+* Rename catch to catch_thousands
+* Change catch column to be numeric 
+* Create new catch column in units num. of fish
+
+```{r}
+
+catch_clean <- catch_long %>% 
+  rename(catch_thousands = catch) %>% # new name = old name 
+  mutate(catch_thousands = ifelse(catch_thousands == "I", 1, catch_thousands)) %>% 
+  mutate(catch_thousands = as.numeric(catch_thousands)) %>% 
+  mutate(catch = catch_thousands*1000) %>% # creates new col or changes values in existing col
+  select(-catch_thousands)
+
+head(catch_clean)
+
+```
+
+```{r, eval=FALSE, echo=FALSE}
+
+# Look for where as.numeric failed. 
+length(which(is.na(catch_long$catch)))
+i <- which(is.na(catch_long$catch))
+catch_long[i,]
+
+```
+
+## Split - Apply - Combine 
+
+* Calculate mean catch by species 
+```{r}
+
+species_mean <- catch_clean %>% group_by(species, Region) %>%  
+  summarize(catch_mean = mean(catch), num_obs = n())
+
+species_mean_wide <- spread(species_mean, key=species, value=catch_mean)
+
+year_mean_all <- catch_clean %>% group_by(Year) %>%  
+  summarize(catch_mean = mean(catch), num_obs = n()) %>% 
+  arrange(-catch_mean) %>%  # Orders in descending order 
+  filter(Year >= 1990)
+
+year_mean_byspp <- catch_clean %>% group_by(Year, species) %>%  
+  summarize(catch_mean = mean(catch), num_obs = n()) %>% 
+  arrange(-catch_mean) %>%  # Orders in descending order 
+  filter(Year >= 1990)
+
+year_mean_wide <- spread(year_mean_byspp, key=species, value=catch_mean)
+
+```
+
+
+# Join the Region Definitions 
+
+```{r}
+
+# Read in regions file 
+region_defs <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1",
+                            method = "libcurl"),
+                        stringsAsFactors = FALSE) %>% 
+    select(code, mgmtArea)
+
+# head(region_defs)
+
+```
+```{r}
+
+# Left join 
+catch_joined <- left_join(catch_clean, region_defs, by=c("Region" = "code"))
+
+# Inner join has same number of rows as left join 
+# This indicates that no there are no missing 
+# catch_joined <- inner_join(catch_clean, region_defs, by=c("Region" = "code"))
+
+```
+
+
+# Misc. Functions 
+
+Split and unite. 
+
+```{r}
+
+dates_df <- data.frame(date = c("5/24/1930",
+                                "5/25/1930",
+                                "5/26/1930",
+                                "5/27/1930",
+                                "5/28/1930"),
+                       stringsAsFactors = FALSE)
+
+dates_split <- dates_df %>% 
+  separate(date, c("month", "day", "year"), "/")
+
+dates_unite <- dates_split %>% unite(col = date_iso, year,  month, day, sep="-")
+
+# Make two digit month 
+dates_2digmonth <- dates_split %>% mutate(month = str_pad(month, 2, side="left", pad="0"))
+
+# Lubridate package is best for dates! 
+
+```
+
+Save data output. 
+
+```{r}
+
+write.csv(catch_clean, "catch_clean.csv", row.names = F)
+
+```
+
