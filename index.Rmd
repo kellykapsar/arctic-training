@@ -1,5 +1,5 @@
 ---
-title: "Data Visualization"
+title: "13. Data Visualization"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -21,6 +21,10 @@ library(leaflet)
 library(DT)
 
 ```
+
+# Link to Data Reformatting Tutorial 
+
+For dplyer/tidyr reference see [my data tidying page](https://kellykapsar.github.io/arctic-training/11-DataReformatting.html).
 
 # Reformat data for plotting
 
