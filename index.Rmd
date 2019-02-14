@@ -16,6 +16,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(RColorBrewer)
+library(scales)
 
 ```
 
@@ -52,28 +53,47 @@ annual_esc <- esc %>%
 
 Save theme function calls to an object.
 
-```{r}
+```{r, echo=F}
 my_theme <- theme_test() + 
   theme(legend.position = "bottom", legend.title=element_blank(), plot.title=element_text(hjust = 0.5))
 ```
 
 
-```{r}
+```{r, echo=F}
 
 ggplot(annual_esc, aes(x=Species, y=Count, fill=SASAP.Region)) + 
   #scale_fill_brewer(palette = "Dark2")
   geom_col()
 
 ```
-```{r}
+
+```{r, echo=F}
 ggplot(filter(annual_esc,SASAP.Region == "Kodiak"), 
        aes(x=Year, y=Count, color=Species)) + 
   geom_line() + 
   geom_point() + 
+  scale_y_continuous(labels = comma) +
   ylab("Escapement (Number of fish)") + 
   xlab("Year") +
   ggtitle("Kodiak Salmon Escapement") + 
   my_theme
+
+```
+
+Create plots for all of the regions. 
+
+```{r, fig.width = 7, fig.height = 8, echo=F}
+
+p <- ggplot(annual_esc, aes(x=Year, y=Count, color=Species)) +
+  geom_line() +
+  geom_point() + 
+  scale_y_continuous(label = comma) + 
+  facet_wrap(~SASAP.Region, scales="free_y", ncol=2) + 
+  my_theme
+
+p
+  
+# ggsave("figures/regional_escapement.png", plot = p)
 
 ```
 
