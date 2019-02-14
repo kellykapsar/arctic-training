@@ -39,3 +39,6 @@ rsconnect/
 # CSV files 
 *.csv
 
+# Figures 
+figures/*
+
