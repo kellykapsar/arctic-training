@@ -17,6 +17,8 @@ library(tidyr)
 library(ggplot2)
 library(RColorBrewer)
 library(scales)
+library(leaflet)
+library(DT)
 
 ```
 
@@ -58,8 +60,7 @@ my_theme <- theme_test() +
   theme(legend.position = "bottom", legend.title=element_blank(), plot.title=element_text(hjust = 0.5))
 ```
 
-
-```{r, echo=F}
+```{r, echo=F, fig.align="center"}
 
 ggplot(annual_esc, aes(x=Species, y=Count, fill=SASAP.Region)) + 
   #scale_fill_brewer(palette = "Dark2")
@@ -67,7 +68,7 @@ ggplot(annual_esc, aes(x=Species, y=Count, fill=SASAP.Region)) +
 
 ```
 
-```{r, echo=F}
+```{r, echo=F, fig.align="center"}
 ggplot(filter(annual_esc,SASAP.Region == "Kodiak"), 
        aes(x=Year, y=Count, color=Species)) + 
   geom_line() + 
@@ -82,7 +83,7 @@ ggplot(filter(annual_esc,SASAP.Region == "Kodiak"),
 
 Create plots for all of the regions. 
 
-```{r, fig.width = 7, fig.height = 8, echo=F}
+```{r, fig.width = 7, fig.height = 8, echo=F, fig.align="center"}
 
 p <- ggplot(annual_esc, aes(x=Year, y=Count, color=Species)) +
   geom_line() +
@@ -99,4 +100,33 @@ p
 
 
 # Create an interactive map 
+
+Map the sampling locations for escapement. 
+
+* Find distinct lat/lon/location combinations. 
+
+```{r, echo=F}
+
+locations <- esc %>% 
+  distinct(Location, Latitude, Longitude) %>% 
+  drop_na()
+
+```
+
+* Create an interactive data table of locations. 
+
+```{r, echo=F}
+
+datatable(locations)
+
+```
+
+```{r, echo=F, fig.align="center"}
+
+leaflet(locations) %>% 
+  addTiles() %>% 
+  addMarkers(lng = ~Longitude, lat = ~Latitude, popup= ~Location)
+
+```
+
 
