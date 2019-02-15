@@ -82,4 +82,13 @@ fahr_to_celsius <- function(x){
 
 ```
 
+## Use our developed R package
+
+```{r}
+
+library(mytools.arcticdatatraining)
+environment_info("Hi")
+
+```
+
 
