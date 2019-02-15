@@ -1,0 +1,59 @@
+---
+title: "ROpenSci"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rnoaa)
+library(ncdf4)
+library(ggplot2)
+library(mapr)
+library(spocc)
+```
+
+# Accessing buoy data using `rnoaa` 
+
+```{r}
+bd <- buoy(dataset = "cwind", 
+           buoyid = 46080, 
+           year = 2018,
+           datatype = "c")
+```
+
+```{r}
+
+# buoy object has two sub-sections
+# meta contains the metadata
+# data contains the data
+
+wind_speed <- data.frame(time = as.POSIXct(bd$data$time), speed = bd$data$wind_spd)
+
+```
+
+```{r}
+ggplot(wind_speed, aes(x=time, y=speed)) + 
+  geom_point() + 
+  xlab("") + 
+  ylab("Wind Speed (m/s)") + 
+  ggtitle("2018 NOAA buoy observations near Kodiak, AK") + 
+  theme_bw() 
+```
+
+
+# Species occurrence maps using `mapr`
+
+```{r}
+spp <- c("Ursus arctos", "Ursus maritimus")
+dat <- occ(query = spp, 
+           from = 'gbif', 
+           has_coords = TRUE, 
+           limit = 500)
+map_leaflet(dat, size=1, color=c("brown", "gray"), alpha=1)
+```
+
+
+
