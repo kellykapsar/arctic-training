@@ -1,0 +1,180 @@
+---
+title: "sf Package Demo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warnings=FALSE, messages=F}
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+library(leaflet)
+```
+
+Read in the data. 
+
+```{r}
+ak_shp_sf <- read_sf("shapefiles/ak_regions_simp.shp")
+```
+
+Take a first look at the data and check the coordinate reference system. 
+
+```{r}
+plot(ak_shp_sf)
+
+st_crs(ak_shp_sf)
+```
+
+Reproject the data to a better projection (Alaska Albers Equal Area). 
+
+```{r}
+ak_shp_sf <- ak_shp_sf %>% 
+  st_transform(crs = 3338)
+
+st_crs(ak_shp_sf)
+```
+
+Now it looks a lot better when plotted. 
+
+```{r}
+plot(ak_shp_sf)
+```
+
+## Spatial joins
+
+Read in the population csv file. 
+Right now the population data frame doesn't have any region information associated with it, but we want it to. 
+
+```{r}
+pop <- read.csv("shapefiles/alaska_population.csv")
+
+# Make it spatial and transform it 
+pop_sf <- st_as_sf(pop, 
+                   coords=c("lng","lat"),
+                   crs=4326, # WGS 84 datum lat lon (we're making an assumption this is the datum)
+                   remove=FALSE) %>% 
+  st_transform(crs=3338)
+
+```
+
+Assign the points to a region using a join. 
+
+```{r}
+# A spatial join is dictated by a function based on the geometries of the objects to be joined 
+pop_joined_sf <- st_join(pop_sf, ak_shp_sf, join=st_within)
+
+plot(pop_joined_sf["region"])
+```
+
+## Group by and summarize 
+
+Need to aggregate the points within a region to calculate population by region. 
+
+```{r}
+pop_region <- pop_joined_sf %>% 
+  as.data.frame() %>% 
+  group_by(region) %>% 
+  summarize(total_pop = sum(population))
+
+head(pop_region)
+```
+
+Join population totals to reion shapefiles. 
+
+```{r}
+ak_pop_sf <- left_join(ak_shp_sf, pop_region)
+
+plot(ak_pop_sf["total_pop"])
+```
+
+With the sf package you can group_by and summarize across geographies. 
+
+```{r}
+ak_mgmt <- ak_pop_sf %>% 
+  group_by(mgmt_area) %>%
+  summarize(total_pop = sum(total_pop))
+
+# By default the summarize function will union across the geometries 
+# Add do_union=F to no do the union 
+
+plot(ak_mgmt["total_pop"])
+```
+
+Write the shapefile. 
+
+```{r}
+write_sf(ak_shp_sf, "shapefiles/ak_regions_population.shp")
+```
+
+# Static plots 
+
+```{r}
+ggplot() + 
+  geom_sf(data=ak_pop_sf, aes(fill=total_pop)) + # Must have data= call! 
+  geom_sf(data=pop_sf, size=0.5) + 
+  theme_bw() + 
+  labs(fill="Total Population") + 
+  scale_fill_continuous(low="khaki", high="firebrick", labels=comma)
+
+# labels=comma is from the scales library
+```
+
+## Interactive maps
+
+Leaflet, unlike ggplot2, wants to project your data for you. 
+
+In order to work with leaflet, you have to give it an unprojected file. 
+
+```{r}
+
+# Create leaflet projection object 
+epsg3338 <- leaflet::leafletCRS(
+  crsClass = "L.Proj.CRS",
+  code = "EPSG:3338",
+  proj4def =  "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+  resolutions = 2^(16:7))
+
+```
+
+```{r}
+# Unproject our data 
+ak_crs <- st_transform(ak_pop_sf, crs=4326) #unprojected data with WGS84 datum
+pop_crs <- st_transform(pop_sf, crs=4326) 
+```
+
+```{r}
+
+pal <- colorNumeric(palette="Reds", domain=ak_crs$total_pop) # Matches domain values to colors
+
+m <- leaflet(options = leafletOptions(crs = epsg3338)) %>% 
+  addPolygons(data = ak_crs, 
+              fillColor= ~pal(total_pop),
+              weight=1, 
+              label= ~region, 
+              fillOpacity =1) %>% 
+  addCircleMarkers(data=pop_crs, 
+                   lat= ~lat,
+                   lng= ~lng, 
+                   radius= 2, 
+                   fillColor="gray",
+                   fillOpacity=1,
+                   weight=0.25, 
+                   color="black",
+                   label= ~pop_sf$city)
+
+m
+```
+
+
+
+
+
+
+
+
+
